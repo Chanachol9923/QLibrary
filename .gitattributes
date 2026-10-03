@@ -1,0 +1,7 @@
+# เก็บเป็น LF ใน repo เสมอ จะได้ไม่มี diff ปลอมเวลาสลับเครื่อง Windows/Mac
+* text=auto eol=lf
+
+# ไฟล์ไบนารี ห้ามแตะ
+*.png binary
+*.jpg binary
+*.pdf binary

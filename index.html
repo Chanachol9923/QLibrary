@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QLibrary — คลังทบทวนบทเรียน</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+
+  <header class="app-bar">
+    <a class="brand" href="#/">
+      <span class="brand-mark">Q</span>
+      <span class="brand-text">
+        <strong>QLibrary</strong>
+        <small>คลังทบทวนบทเรียน</small>
+      </span>
+    </a>
+
+    <nav class="app-bar-actions">
+      <button class="icon-btn" id="btn-theme" title="สลับธีมสว่าง/มืด" aria-label="สลับธีม">◐</button>
+      <button class="icon-btn" id="btn-help" title="คีย์ลัด" aria-label="คีย์ลัด">?</button>
+    </nav>
+  </header>
+
+  <main id="app" class="app"></main>
+
+  <div id="modal-root"></div>
+
+  <!-- ============ core ============ -->
+  <script src="assets/js/core/util.js"></script>
+  <script src="assets/js/core/store.js"></script>
+  <script src="assets/js/core/library.js"></script>
+  <script src="assets/js/core/modes.js"></script>
+  <script src="assets/js/core/router.js"></script>
+
+  <!-- ============ โหมดการเรียน (เพิ่มโหมดใหม่ = เพิ่มไฟล์แล้วมาต่อบรรทัดตรงนี้) ============ -->
+  <script src="assets/js/modes/browse.js"></script>
+  <script src="assets/js/modes/flashcards.js"></script>
+  <script src="assets/js/modes/quiz.js"></script>
+  <script src="assets/js/modes/write.js"></script>
+  <script src="assets/js/modes/work.js"></script>
+
+  <!-- ============ หน้าจอ ============ -->
+  <script src="assets/js/views/home.js"></script>
+  <script src="assets/js/views/deck.js"></script>
+
+  <!-- ============ เนื้อหา (เพิ่มบทเรียนใหม่ = เพิ่มไฟล์แล้วมาต่อบรรทัดตรงนี้)
+       จัดกลุ่มตาม subject ของแต่ละ pack หน้าแรกจะแยกวิชาให้เอง ============ -->
+
+  <!-- วิชา: CS461 Deep Learning -->
+  <script src="content/cs461-midterm.js"></script>
+
+  <!-- วิชา: CS319 Internet Programming I -->
+  <script src="content/cs319-w2-html.js"></script>
+
+  <!-- วิชา: ภาษาญี่ปุ่น N5 -->
+  <script src="content/jpn5-l1.js"></script>
+  <script src="content/jpn5-l2.js"></script>
+  <script src="content/jpn5-l3.js"></script>
+  <script src="content/jpn5-exam2.js"></script>
+
+  <!-- ============ boot ============ -->
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
