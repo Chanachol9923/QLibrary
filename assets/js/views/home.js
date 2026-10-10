@@ -154,6 +154,7 @@ QL.views.home = function (root) {
     var s = QL.store.deckStats(pack.id, ids);
 
     var counts = [];
+    if (pack.vocab.length) counts.push(pack.vocab.length + ' คำศัพท์');
     if (pack.cards.length) counts.push(pack.cards.length + ' การ์ด');
     if (pack.quiz.length) counts.push(pack.quiz.length + ' ข้อควิซ');
     if (pack.write.length) counts.push(pack.write.length + ' โจทย์เขียน');

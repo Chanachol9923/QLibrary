@@ -578,3 +578,141 @@ pre.code .jp-line + .jp-line { margin-top: 5px; }
   .prompt-card { padding: 22px 18px; }
   .prompt-text { font-size: 18px; }
 }
+
+/* ---------- ท่องศัพท์ (รูป + ตัวญี่ปุ่น + โรมาจิ) ---------- */
+.seg { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 99px; overflow: hidden; background: var(--surface); }
+.seg button {
+  padding: 7px 15px; border: 0; background: transparent; color: var(--text-dim);
+  font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer;
+}
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button:hover { background: var(--surface-2); color: var(--text); }
+.seg button.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+
+.v-controls { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-bottom: 14px; }
+.v-seg-wrap { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.v-seg-label { font-size: 12.5px; color: var(--text-faint); }
+
+.v-group-title { margin-top: 26px; }
+.v-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; }
+
+.vcard {
+  position: relative;
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 46px 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+.vcard:hover { border-color: var(--border-strong); box-shadow: var(--shadow); }
+.vcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.v-body { flex: 1; min-width: 0; }
+
+/* รูป: อีโมจิ / อีโมจิซ้อน / ตัวเลข / ธงชาติ */
+.v-pic {
+  flex: none;
+  width: 76px; height: 76px;
+  display: flex; align-items: center; justify-content: center; gap: 2px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: 42px; line-height: 1;
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", var(--sans);
+  overflow: hidden;
+}
+.v-pic.is-multi { font-size: 27px; flex-wrap: wrap; align-content: center; }
+.v-pic.is-text { font-size: 22px; font-weight: 700; font-family: var(--sans); color: var(--accent); letter-spacing: -.02em; }
+.v-pic.is-flag { width: 84px; height: 56px; border-radius: 6px; background: transparent; border-color: var(--border-strong); }
+.v-pic.is-flag svg { width: 100%; height: 100%; display: block; }
+.v-pic-lg { width: 120px; height: 120px; font-size: 68px; margin: 4px auto 14px; display: flex; border-radius: 16px; }
+.v-pic-lg.is-multi { font-size: 44px; }
+.v-pic-lg.is-text { font-size: 32px; }
+.v-pic-lg.is-flag { width: 150px; height: 100px; }
+
+.v-kana {
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 9px;
+  font-size: 25px; font-weight: 600; line-height: 1.3; letter-spacing: .01em;
+}
+.v-kana.lg { font-size: 38px; justify-content: center; }
+.v-script {
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0; padding: 0 7px; line-height: 1.7;
+  border-radius: 99px; border: 1px solid var(--border-strong); color: var(--text-faint);
+}
+.v-script.kata { color: var(--warn); border-color: var(--warn); background: var(--warn-soft); }
+.v-script.hira { color: var(--accent); border-color: transparent; background: var(--accent-soft); }
+.v-kanji { font-size: 14px; color: var(--text-dim); line-height: 1.4; }
+.v-romaji { font-size: 14px; color: var(--accent); font-weight: 500; line-height: 1.4; letter-spacing: .01em; }
+.v-alt { font-size: 13px; color: var(--text-dim); margin-top: 2px; }
+.v-alt .v-romaji { font-size: 12.5px; color: var(--text-faint); font-weight: 400; }
+.v-th { margin-top: 5px; font-size: 15.5px; color: var(--text); line-height: 1.45; }
+.v-note { margin-top: 3px; font-size: 12.5px; color: var(--warn); line-height: 1.4; }
+
+.v-speak {
+  position: absolute; top: 8px; right: 8px;
+  width: 32px; height: 32px; border-radius: 99px;
+  border: 1px solid var(--border); background: var(--surface-2);
+  font-size: 14px; line-height: 1; cursor: pointer;
+}
+.v-speak:hover { border-color: var(--accent); background: var(--accent-soft); }
+
+/* ทายตัวเอง: เบลอส่วนที่ปิดไว้ แตะการ์ดเพื่อเปิด */
+.v-cover-th .vcard:not(.revealed) .v-th,
+.v-cover-th .vcard:not(.revealed) .v-note,
+.v-cover-jp .vcard:not(.revealed) .v-note,
+.v-cover-jp .vcard:not(.revealed) .v-jp {
+  filter: blur(9px); opacity: .75; pointer-events: none;
+}
+.v-cover-th .vcard:not(.revealed), .v-cover-jp .vcard:not(.revealed) { border-style: dashed; }
+
+/* ฝึกจำ: การ์ดใหญ่ */
+.v-flash { text-align: center; }
+.v-flash .v-jp { text-align: center; }
+.v-ask { font-size: 24px; font-weight: 600; line-height: 1.4; margin-bottom: 4px; }
+.v-answer { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.v-answer .v-speak { position: static; margin-top: 8px; }
+
+/* จำลองสอบ */
+.v-paper-note { padding: 11px 15px; margin-bottom: 14px; border-radius: var(--radius-sm); background: var(--accent-soft); color: var(--accent); font-size: 14px; }
+.v-q {
+  display: flex; align-items: flex-start; gap: 13px;
+  padding: 14px 16px; margin-bottom: 10px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.v-qnum {
+  flex: none; width: 28px; height: 28px; display: grid; place-items: center;
+  border-radius: 99px; background: var(--surface-2); border: 1px solid var(--border);
+  font-size: 13px; font-weight: 600; color: var(--text-dim);
+}
+.v-qmain { flex: 1; min-width: 0; }
+.v-qth { font-size: 17px; font-weight: 600; margin-bottom: 8px; line-height: 1.4; }
+.v-hint { margin: 2px 0 10px; }
+.v-hint[hidden] { display: none; }
+.v-hint-btn { flex: none; padding: 6px 10px; font-size: 13px; }
+
+.v-res {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 14px; margin-bottom: 10px;
+  background: var(--surface); border: 1px solid var(--border); border-left-width: 4px; border-radius: var(--radius);
+}
+.v-res.ok { border-left-color: var(--ok); }
+.v-res.bad { border-left-color: var(--bad); background: var(--bad-soft); }
+.v-res .v-th { margin: 0 0 3px; font-size: 14px; color: var(--text-dim); }
+.v-res .v-kana { font-size: 22px; }
+.v-yours { margin-top: 6px; font-size: 14px; }
+.v-yours strong { color: var(--bad); font-weight: 600; }
+.v-mark { flex: none; font-size: 22px; font-weight: 700; }
+.v-res.ok .v-mark { color: var(--ok); }
+.v-res.bad .v-mark { color: var(--bad); }
+
+@media (max-width: 520px) {
+  .v-grid { grid-template-columns: 1fr; }
+  .v-pic { width: 64px; height: 64px; font-size: 36px; }
+  .v-pic.is-flag { width: 72px; height: 48px; }
+  .v-pic.is-multi { font-size: 23px; }
+  .v-kana { font-size: 23px; }
+  .v-q { flex-wrap: wrap; }
+  .v-hint-btn { margin-left: 41px; }
+}
