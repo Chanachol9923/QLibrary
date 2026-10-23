@@ -48,12 +48,39 @@
       root.appendChild(stage);
 
       /* ---------- ข้อมูล ---------- */
+      // ค่าพิเศษของ cfg.group = "รวมทุกหมวดที่เล่นไปแล้ว" (ทวนรวม)
+      var PLAYED = '__played__';
+
       function inScope() {
+        var played = cfg.group === PLAYED ? playedSet() : null;
         return pack.vocab.filter(function (v) {
+          var g = v.group || 'อื่น ๆ';
           return v.exam !== false &&
             (cfg.ch === null || (v.ch || 1) === cfg.ch) &&
-            (!cfg.group || (v.group || 'อื่น ๆ') === cfg.group);
+            (!cfg.group || (played ? played[g] : g === cfg.group));
         });
+      }
+
+      /**
+       * หมวดที่เคยเล่นในเกมจับคู่ของ pack นี้ (เล่นจบอย่างน้อย 1 รอบ) — คืน { ชื่อหมวด: true }
+       * รวมของเก่าจากสถิติเวลา (matchBest) ด้วย เผื่อเล่นไว้ก่อนมีฟีเจอร์นี้
+       */
+      function playedSet() {
+        var set = Object.assign({}, (QL.store.setting('matchPlayed') || {})[deckId] || {});
+        Object.keys(QL.store.setting('matchBest') || {}).forEach(function (k) {
+          var p = k.split('|');                         // deckId|ch|group|style
+          if (p[0] === deckId && p[2] && p[2] !== 'all' && p[2].indexOf(PLAYED) !== 0) set[p[2]] = true;
+        });
+        return set;
+      }
+
+      function markPlayed(name) {
+        if (!name || name === PLAYED) return;
+        var all = QL.store.setting('matchPlayed') || {};
+        all[deckId] = all[deckId] || {};
+        if (all[deckId][name]) return;
+        all[deckId][name] = true;
+        QL.store.setting('matchPlayed', all);
       }
 
       function groupNames() {
@@ -67,7 +94,11 @@
         return list.map(function (n) { return { name: n, count: seen[n] }; });
       }
 
-      function scopeKey() { return deckId + '|' + (cfg.ch || 'all') + '|' + (cfg.group || 'all') + '|' + cfg.style; }
+      function scopeKey() {
+        // ชุดทวนรวมเปลี่ยนไปตามจำนวนหมวดที่เล่นแล้ว → แยกสถิติตามจำนวนหมวด เวลาจะได้เทียบกันได้จริง
+        var g = cfg.group === PLAYED ? PLAYED + ':' + Object.keys(playedSet()).length : (cfg.group || 'all');
+        return deckId + '|' + (cfg.ch || 'all') + '|' + g + '|' + cfg.style;
+      }
 
       function picKey(v) { return v.flag ? 'flag:' + v.flag : JSON.stringify(v.pic || ''); }
 
@@ -165,11 +196,53 @@
 
         var all = pack.vocab.filter(function (v) { return cfg.ch === null || (v.ch || 1) === cfg.ch; });
         tile('', u.shuffle(all), '🎲 ทุกหมวด (สุ่ม)');
+        reviewTile(all, groups);
         groups.forEach(function (g) {
           tile(g.name, all.filter(function (v) { return (v.group || 'อื่น ๆ') === g.name; }), g.name);
         });
         cfg.group = '';
         stage.appendChild(grid);
+
+        /** แผ่น "รวมทุกหมวดที่เล่นแล้ว" — ทวนข้ามหมวด ต้องเล่นมาแล้วอย่างน้อย 2 หมวดถึงจะมีความหมาย */
+        function reviewTile(pool, groups) {
+          var played = playedSet();
+          var names = groups.map(function (g) { return g.name; }).filter(function (n) { return played[n]; });
+
+          if (names.length < 2) {
+            grid.appendChild(u.el('div', { class: 'card vg-tile mt-review is-locked' }, [
+              u.el('div', { class: 'vg-pics' }, [u.el('span', { class: 'v-pic vg-pic', text: '🔁' })]),
+              u.el('div', { class: 'vg-name', text: 'รวมหมวดที่เล่นแล้ว' }),
+              u.el('div', { class: 'vg-meta', text: names.length
+                ? 'เล่นแล้ว 1 หมวด (' + names[0] + ') · เล่นอีกอย่างน้อย 1 หมวดจะเปิดให้ทวนรวม'
+                : 'เล่นหมวดไหนก็ได้ให้จบอย่างน้อย 2 หมวด แล้วจะทวนรวมได้ที่นี่' })
+            ]));
+            return;
+          }
+
+          cfg.group = PLAYED;
+          var items = inScope();
+          var best = bests[scopeKey()];
+          var plan = buildRounds(items);
+          var pairs = plan.reduce(function (a, r) { return a + r.length; }, 0);
+
+          var preview = u.el('div', { class: 'vg-pics' });
+          // โชว์รูปจากหมวดละคำ จะเห็นว่าคละหลายหมวด
+          names.slice(0, 4).forEach(function (n) {
+            var v = items.filter(function (x) { return (x.group || 'อื่น ๆ') === n; })[0];
+            if (v) preview.appendChild(V.pic(v, 'vg-pic'));
+          });
+
+          var t = u.el('button', { class: 'card vg-tile mt-review', type: 'button' }, [
+            preview,
+            u.el('div', { class: 'vg-name', text: '🔁 รวมหมวดที่เล่นแล้ว (' + names.length + ' หมวด)' }),
+            u.el('div', { class: 'vg-meta', text: names.join(' · ') }),
+            u.el('div', { class: 'vg-meta', text: pairs + ' คู่ · ' + plan.length + ' รอบ · คละทุกหมวดในรอบเดียวกัน' }),
+            u.el('div', { class: 'vg-best', text: best ? '🏆 ' + fmtTime(best.ms) + ' · ผิด ' + best.miss + ' ครั้ง' : 'ยังไม่เคยทวนรวม' })
+          ]);
+          t.addEventListener('click', function () { cfg.group = PLAYED; startGame(buildRounds(inScope())); });
+          grid.appendChild(t);
+          cfg.group = '';
+        }
       }
 
       /* =====================================================
@@ -312,6 +385,7 @@
         totals.ms += board.ms;
         totals.miss += board.miss;
         Object.keys(board.missed).forEach(function (id) { totals.missed[id] = board.missed[id]; });
+        markPlayed(cfg.group);   // จบ 1 รอบ = นับว่าหมวดนี้เล่นแล้ว → ไปโผล่ในชุด "รวมหมวดที่เล่นแล้ว"
 
         var last = roundIdx + 1 >= rounds.length;
         var st = stars(board.miss, board.words.length);
