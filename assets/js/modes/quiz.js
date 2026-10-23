@@ -66,6 +66,7 @@
         var card = u.el('div', { class: 'prompt-card' });
         card.appendChild(u.el('div', { class: 'prompt-topic', text: q.topic || pack.title }));
         card.appendChild(u.el('div', { class: 'prompt-text', html: jp(q.question) }));
+        if (isText && QL.vocab) { var sb = QL.vocab.speakTextBtn(q.question); if (sb) card.appendChild(sb); }
         if (q.code) card.appendChild(u.jpBlock(q.code, codeClass, isText));
         stage.appendChild(card);
 

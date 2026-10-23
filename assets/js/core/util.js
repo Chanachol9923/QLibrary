@@ -270,6 +270,15 @@ QL.util = (function () {
     s = s.replace(/も(?=[\s　。、？！?!]|$)/g, ' も');          // คำช่วย も
     // คำช่วย の ที่คั่นคำนาม — ยกเว้น この/その/あの/どの ซึ่ง の เป็นส่วนหนึ่งของคำ
     s = s.replace(/([^こそあど])の(?=[\s　で])/g, '$1 の');
+    // คำช่วยบทที่ 4-6 — ตัดเฉพาะตอนที่ตามด้วยเว้นวรรค (= จบคำแล้ว)
+    // ลำดับสำคัญ: と ต้องมาก่อน で/に ไม่งั้น デパートで → "でぱーと で" แล้ว と ถูกตัดผิด
+    s = s.replace(/([^\s　っひー])と(?=[\s　])/g, '$1 と');    // ともだちと · ยกเว้น ちょっと / ひと / デパート
+    s = s.replace(/へ(?=[\s　。、？！?!]|$)/g, '\u0003');      // คำช่วย へ อ่านว่า e (ไม่ใช่ he) · へや ไม่โดน
+    s = s.replace(/を/g, ' を');                                // を เป็นคำช่วยเสมอ
+    s = s.replace(/([^\s　])まで(?=[\s　]|で)/g, '$1 まで');    // 1じまで / 1じまでです
+    s = s.replace(/([^\s　])で(?=[\s　])/g, '$1 で');          // バスで / デパートで
+    s = s.replace(/([^\s　く])に(?=[\s　])/g, '$1 に');        // 6じに · ยกเว้น くに (ประเทศ)
+    s = s.replace(/(ます|ません|ましょう)か(?=[。？?\s　]|$)/g, '$1 か');
     // คำต่อท้ายชื่อ/สัญชาติ — ตัดเฉพาะตอนที่ตามด้วยขอบคำจริง ๆ
     // (กัน さん ในตัวเลขอย่าง いちまんさんぜん ถูกตัดผิด)
     s = s.replace(/(さん|ちゃん|じん)(?=[\s　。、？！?!」』（）()]|も|の|で|じゃ|か|$)/g, ' $1');
@@ -287,6 +296,7 @@ QL.util = (function () {
       var ch = s.charAt(i);
 
       if (ch === '\u0001') { out.push(' wa'); i++; continue; }
+      if (ch === '\u0003') { out.push(' e'); i++; continue; }
       if (ch === '\u0002') { out.push('dewa'); i++; continue; }
 
       // สระยาว ー → ซ้ำสระตัวสุดท้าย
@@ -361,6 +371,19 @@ QL.util = (function () {
     }).join('');
   }
 
+  /**
+   * รูปประกอบคำศัพท์ — ค้นจากพจนานุกรมรูป QL.pictures (content/jpn5-pictures.js)
+   * รับข้อความแบบที่อยู่ในการ์ดได้เลย เช่น "[お]みやげ ([お]土産)" หรือ "ぎんこう (銀行)"
+   * ตัดวงเล็บ/คันจิกำกับออก แล้วลองทั้งแบบมี お และไม่มี お นำหน้า
+   */
+  function pictureFor(text) {
+    var map = window.QL && QL.pictures;
+    if (!map || !text) return '';
+    var key = String(text).replace(/[\[\]［］]/g, '').split(/[\s　(（\n]/)[0].trim();
+    if (!key) return '';
+    return map[key] || (key.charAt(0) === 'お' ? map[key.slice(1)] : map['お' + key]) || '';
+  }
+
   /** บล็อกตัวอย่างประโยค — แต่ละบรรทัดมีโรมาจิกำกับใต้บรรทัด */
   function jpBlock(text, cls, withRomaji) {
     var pre = el('pre', { class: cls });
@@ -379,6 +402,7 @@ QL.util = (function () {
     bar: bar, toast: toast, modal: modal,
     normalizeCode: normalizeCode, normalizeText: normalizeText, normalizerFor: normalizerFor,
     romaji: romaji, addRomajiFix: addRomajiFix, hasKana: hasKana, isJapaneseLine: isJapaneseLine,
+    pictureFor: pictureFor,
     miniJP: miniJP, jpBlock: jpBlock
   };
 })();

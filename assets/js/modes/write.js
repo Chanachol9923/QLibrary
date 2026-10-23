@@ -60,6 +60,7 @@
         card.appendChild(u.el('div', { class: 'prompt-text',
           html: highlightBlanks(isText ? u.miniJP(t.prompt, true) : u.mini(t.prompt)) }));
         if (t.given) card.appendChild(u.jpBlock(t.given, codeClass, isText));
+        if (isText && QL.vocab) { var sb = QL.vocab.speakTextBtn(t.prompt); if (sb) card.appendChild(sb); }
         stage.appendChild(card);
 
         input = u.el('textarea', {
@@ -142,7 +143,14 @@
 
         box.appendChild(u.el('div', { style: 'margin-top:12px' }, [
           u.el('div', { class: 'study-meta', text: 'เฉลย' }),
-          u.jpBlock(t.sample, codeClass, isText)
+          (isText && u.pictureFor(t.sample))
+            ? (/^flag:/.test(u.pictureFor(t.sample)) && QL.vocab
+              ? u.el('div', { class: 'vocab-pic vocab-pic-sm' }, [QL.vocab.pic({ flag: u.pictureFor(t.sample).slice(5) })])
+              : u.el('div', { class: 'vocab-pic vocab-pic-sm', text: u.pictureFor(t.sample) }))
+            : null,
+          u.jpBlock(t.sample, codeClass, isText),
+          (isText && QL.vocab && QL.vocab.speakTextBtn(t.sample))
+            ? u.el('div', { class: 'speak-row' }, [QL.vocab.speakTextBtn(t.sample)]) : null
         ]));
 
         if (!ok && raw.trim()) {

@@ -299,9 +299,23 @@ QL.vocab = (function () {
     return box;
   }
 
+  /**
+   * ปุ่ม 🔊 สำหรับข้อความทั่วไป (โจทย์ควิซ / การ์ด / ประโยคตัวอย่าง)
+   * อ่านเฉพาะบรรทัดที่เป็นภาษาญี่ปุ่น ข้ามภาษาไทย ตัดมาร์กอัปและช่องว่าง（　）ทิ้ง
+   * คืน null ถ้าไม่มีภาษาญี่ปุ่นให้อ่าน หรือเบราว์เซอร์ไม่มีเสียงอ่าน
+   */
+  function speakTextBtn(text) {
+    if (!canSpeak) return null;
+    var jp = String(text || '').split('\n').filter(function (l) { return u.hasKana(l) && !/[฀-๿]/.test(l); })
+      .map(function (l) { return l.replace(/\*\*|`/g, '').replace(/[（(][\s　]*[)）]/g, '、').replace(/→.*$/, ''); })
+      .join('。');
+    if (!jp.trim()) return null;
+    return speakBtn({ kana: jp });
+  }
+
   return {
     pic: pic, script: script, SCRIPT_LABEL: SCRIPT_LABEL, romaji: romaji,
-    speak: speak, speakBtn: speakBtn, canSpeak: canSpeak,
+    speak: speak, speakBtn: speakBtn, speakTextBtn: speakTextBtn, canSpeak: canSpeak,
     accepted: accepted, check: check,
     chapters: chapters, groups: groups, chapterChips: chapterChips,
     japaneseBlock: japaneseBlock

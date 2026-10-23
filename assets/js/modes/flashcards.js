@@ -56,7 +56,15 @@
         var face = u.el('div', { class: 'prompt-card flash' });
 
         face.appendChild(u.el('div', { class: 'prompt-topic', text: card.topic || pack.title }));
+        // รูปประกอบคำศัพท์ (ระบุเองใน card.img หรือค้นจากพจนานุกรมรูปให้อัตโนมัติ)
+        var pic = card.img || (isText ? u.pictureFor(card.front) : '');
+        if (pic && /^flag:/.test(pic) && QL.vocab) {
+          face.appendChild(u.el('div', { class: 'vocab-pic' }, [QL.vocab.pic({ flag: pic.slice(5) }, 'v-pic-lg')]));
+        } else if (pic) {
+          face.appendChild(u.el('div', { class: 'vocab-pic', text: pic }));
+        }
         face.appendChild(u.el('div', { class: 'prompt-text', html: jp(card.front) }));
+        if (isText && QL.vocab) { var sb = QL.vocab.speakTextBtn(card.front); if (sb) face.appendChild(sb); }
 
         if (flipped) {
           var back = u.el('div', { class: 'flash-face-back answer-text', html: jp(card.back) });

@@ -481,6 +481,15 @@ pre.code.calc { font-size: 13.5px; line-height: 1.75; }
 }
 .text-input { font-family: var(--sans) !important; font-size: 18px !important; line-height: 1.7 !important; }
 
+/* ---------- รูปประกอบคำศัพท์ ---------- */
+.vocab-pic {
+  font-size: 64px;
+  line-height: 1.1;
+  margin: 2px 0 10px;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+}
+.vocab-pic-sm { font-size: 40px; margin: 8px 0 0; }
+
 /* ---------- คำอ่านโรมาจิใต้ตัวอักษรญี่ปุ่น ---------- */
 .jp-line { display: block; }
 .romaji {
@@ -715,4 +724,79 @@ pre.code .jp-line + .jp-line { margin-top: 5px; }
   .v-kana { font-size: 23px; }
   .v-q { flex-wrap: wrap; }
   .v-hint-btn { margin-left: 41px; }
+}
+
+/* ---------- ควิซตามหมวด ---------- */
+.vg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin-top: 6px; }
+.vg-tile {
+  display: flex; flex-direction: column; gap: 7px;
+  text-align: left; cursor: pointer; font-family: inherit; color: inherit;
+  transition: transform .12s ease, border-color .12s ease;
+}
+.vg-tile:hover { transform: translateY(-2px); border-color: var(--accent); }
+.vg-tile.done { border-color: color-mix(in srgb, var(--ok) 55%, transparent); }
+.vg-pics { display: flex; gap: 6px; }
+.vg-pics .v-pic.vg-pic { width: 44px; height: 44px; font-size: 25px; border-radius: 10px; }
+.vg-pics .v-pic.vg-pic.is-multi { font-size: 15px; }
+.vg-pics .v-pic.vg-pic.is-text { font-size: 15px; }
+.vg-pics .v-pic.vg-pic.is-flag { width: 54px; height: 36px; }
+.vg-name { font-size: 16.5px; font-weight: 700; }
+.vg-meta { font-size: 12.5px; color: var(--text-faint); }
+.vg-best { font-size: 12.5px; color: var(--text-dim); }
+.vg-choices .choice { align-items: center; }
+.vg-c-body { display: flex; flex-direction: column; }
+.vg-c-kana { font-size: 19px; font-weight: 600; }
+.vg-c-rom { font-size: 12.5px; color: var(--text-faint); }
+.vg-input { font-size: 22px !important; text-align: center; }
+.vg-answer { display: flex; gap: 14px; align-items: flex-start; margin-top: 12px; }
+
+/* ปุ่มฟังเสียงที่แทรกในโหมดทั่วไป (ควิซ / แฟลชการ์ด / ทดสอบเขียน) ของวิชาภาษาญี่ปุ่น */
+.speak-row { margin-top: 8px; }
+.speak-row .v-speak { position: static; }
+.prompt-card, .vg-answer { position: relative; }
+.prompt-card > .v-speak { width: 42px; height: 42px; font-size: 19px; top: 12px; right: 12px; }
+.vg-pics { overflow: hidden; }
+.vg-pics .v-pic.vg-pic.is-flag { width: 46px; height: 31px; flex: 0 0 auto; }
+
+/* ---------- เกมจับคู่ ---------- */
+.vg-tile.mt-all { border-style: dashed; }
+.mt-board { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.mt-col { display: flex; flex-direction: column; gap: 10px; }
+.mt-tile {
+  min-height: 64px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  padding: 10px 12px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+  touch-action: manipulation;          /* แตะเร็ว ๆ บน iPad ไม่ซูม */
+  -webkit-user-select: none; user-select: none;
+  transition: border-color .12s ease, background .12s ease, transform .12s ease, opacity .25s ease;
+}
+.mt-tile:hover:not(:disabled) { border-color: var(--border-strong); }
+.mt-kana { font-size: 21px; font-weight: 700; line-height: 1.25; }
+.mt-rom { font-size: 12px; color: var(--text-faint); }
+.mt-th { font-size: 15px; line-height: 1.35; text-align: center; }
+.mt-board.is-pic .mt-tile { min-height: 76px; }
+.mt-pic .v-pic.mt-v-pic { width: 56px; height: 56px; font-size: 34px; border: none; background: transparent; }
+.mt-pic .v-pic.mt-v-pic.is-multi { font-size: 24px; }
+.mt-pic .v-pic.mt-v-pic.is-text { font-size: 24px; }
+.mt-pic .v-pic.mt-v-pic.is-flag { width: 66px; height: 44px; }
+.mt-tile.selected { border-color: var(--accent); background: var(--accent-soft); transform: scale(1.02); }
+.mt-tile.matched { border-color: var(--ok); background: var(--ok-soft); opacity: .45; cursor: default; }
+.mt-tile.wrong { border-color: var(--bad); background: var(--bad-soft); animation: mt-shake .35s ease; }
+@keyframes mt-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+.mt-stars { font-size: 30px; color: var(--warn); letter-spacing: 4px; }
+@media (max-width: 620px) {
+  .mt-board { gap: 8px; }
+  .mt-col { gap: 8px; }
+  .mt-kana { font-size: 18px; }
+  .mt-th { font-size: 13.5px; }
 }

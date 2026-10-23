@@ -91,12 +91,12 @@
           }
         } else {
           face.appendChild(V.japaneseBlock(e, 'lg'));
+          face.appendChild(V.speakBtn(e));   // ทิศนี้ฟังเสียงก่อนพลิกได้ ไม่เฉลยความหมาย
           if (flipped) {
             face.appendChild(u.el('div', { class: 'flash-face-back v-answer' }, [
               V.pic(e, 'v-pic-lg'),
               u.el('div', { class: 'v-ask', text: e.th }),
-              e.note ? u.el('div', { class: 'v-note', text: e.note }) : null,
-              V.speakBtn(e)
+              e.note ? u.el('div', { class: 'v-note', text: e.note }) : null
             ]));
           }
         }
