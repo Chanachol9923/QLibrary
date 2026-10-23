@@ -19,6 +19,13 @@
       var typing = tag === 'input' || tag === 'textarea' || e.target.isContentEditable;
       if (typing && !(e.ctrlKey || e.metaKey)) return;
 
+      // R = ซ่อน/แสดงโรมาจิ ใช้ได้ทุกหน้า (ดู e.code จะได้ใช้ได้แม้คีย์บอร์ดเป็นภาษาไทย)
+      if (e.code === 'KeyR' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        toggleRomaji();
+        return;
+      }
+
       if (handler) handler(e);
     });
 
@@ -47,9 +54,31 @@
     applyTheme(now === 'dark' ? 'light' : 'dark');
   });
 
+  /* ---------- ซ่อน/แสดงโรมาจิ ----------
+     ใส่ class ที่ <html> ทีเดียว CSS ซ่อนโรมาจิทุกจุดให้เอง (การ์ด ควิซ เกมจับคู่ ประโยคตัวอย่าง)
+     ไม่ต้องวาดหน้าใหม่ — กดกลางควิซก็ซ่อนทันที */
+  function applyRomaji(hidden) {
+    document.documentElement.classList.toggle('hide-romaji', hidden);
+    var b = u.$('#btn-romaji');
+    b.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+    b.setAttribute('aria-label', hidden ? 'แสดงโรมาจิ' : 'ซ่อนโรมาจิ');
+    b.title = (hidden ? 'แสดงโรมาจิ' : 'ซ่อนโรมาจิ') + ' (กด R)';
+  }
+
+  function toggleRomaji() {
+    var hidden = !document.documentElement.classList.contains('hide-romaji');
+    QL.store.setting('hideRomaji', hidden);
+    applyRomaji(hidden);
+    u.toast(hidden ? 'ซ่อนโรมาจิแล้ว — กด Ro หรือ R เพื่อแสดง' : 'แสดงโรมาจิ');
+  }
+
+  applyRomaji(QL.store.setting('hideRomaji') === true);
+  u.$('#btn-romaji').addEventListener('click', toggleRomaji);
+
   /* ---------- หน้าต่างคีย์ลัด ---------- */
   u.$('#btn-help').addEventListener('click', function () {
     var rows = [
+      ['R', 'ซ่อน / แสดงโรมาจิ (ทุกหน้า)'],
       ['Space / ↵', 'พลิกการ์ด (โหมดแฟลชการ์ด)'],
       ['1 / 2 / 3', 'ให้คะแนนตัวเอง: ยังไม่ได้ / ไม่แน่ใจ / จำได้'],
       ['1 - 4', 'เลือกคำตอบ (โหมดควิซ)'],

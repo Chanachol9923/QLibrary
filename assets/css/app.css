@@ -803,3 +803,16 @@ pre.code .jp-line + .jp-line { margin-top: 5px; }
 .vg-tile.mt-review { border-color: var(--accent); background: linear-gradient(var(--accent-soft), var(--surface) 70%); }
 .vg-tile.mt-review.is-locked { border-style: dashed; border-color: var(--border-strong); background: var(--surface); opacity: .75; cursor: default; }
 .vg-tile.mt-review.is-locked:hover { transform: none; }
+
+/* ---------- ปุ่มซ่อนโรมาจิ ---------- */
+.romaji-btn { width: auto; min-width: 38px; padding: 0 9px; font-size: 13px; font-weight: 700; letter-spacing: .02em; }
+.romaji-btn[aria-pressed="true"] {
+  color: var(--text-faint);
+  text-decoration: line-through;
+  border-style: dashed;
+}
+/* ซ่อนโรมาจิทุกจุด: ใต้บรรทัดญี่ปุ่น · การ์ดศัพท์ · ตัวเลือกควิซ · ไทล์เกมจับคู่ */
+.hide-romaji .romaji,
+.hide-romaji .v-romaji,
+.hide-romaji .vg-c-rom,
+.hide-romaji .mt-rom { display: none !important; }
