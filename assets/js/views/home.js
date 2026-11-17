@@ -155,6 +155,7 @@ QL.views.home = function (root) {
 
     var counts = [];
     if (pack.vocab.length) counts.push(pack.vocab.length + ' คำศัพท์');
+    if (pack.fill.length) counts.push(pack.fill.length + ' ข้อเติมคำ');
     if (pack.cards.length) counts.push(pack.cards.length + ' การ์ด');
     if (pack.quiz.length) counts.push(pack.quiz.length + ' ข้อควิซ');
     if (pack.write.length) counts.push(pack.write.length + ' โจทย์เขียน');

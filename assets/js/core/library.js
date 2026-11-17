@@ -21,7 +21,8 @@
      quiz:   [ { id, question, choices: [], answer: <index>, explain, topic } ],
      write:  [ { id, prompt, hint, answers: [], sample, topic } ],
      work:   [ { id, prompt, given, hint, steps: [], answer, topic } ]   // โจทย์แสดงวิธีทำ (เขียนด้วยปากกา)
-     vocab:  [ { id, ch, page, group, pic | flag, kana, kanji, th, alt, note, exam } ]   // ศัพท์สำหรับท่อง (ดู content/_template.js)
+     vocab:  [ { id, ch, page, group, pic | flag, kana, kanji, th, alt, note, exam } ]
+     fill:   [ { id, ch, page, text: 'ประโยคมี （　） 1 ช่อง', answer, alt: [], th, note } ]   // เติมคำ a–t   // ศัพท์สำหรับท่อง (ดู content/_template.js)
    }
    ทุก section เป็น optional — pack ที่มีแค่ cards ก็ใช้ได้ โหมดที่ไม่มีข้อมูลจะถูกซ่อน
    ========================================================= */
@@ -47,6 +48,7 @@ QL.library = (function () {
     pack.write = pack.write || [];
     pack.work = pack.work || [];
     pack.vocab = pack.vocab || [];
+    pack.fill = pack.fill || [];     // โจทย์เติมคำจากคลังคำ a–t (โหมด "เติมคำ a–t")
     pack.icon = pack.icon || '📘';
     pack.subject = pack.subject || 'อื่น ๆ';
     pack.category = pack.category || 'อื่น ๆ';
@@ -56,7 +58,7 @@ QL.library = (function () {
     if (pack.romajiFix) QL.util.addRomajiFix(pack.romajiFix);
 
     // ถ้ารายการไหนไม่ได้ตั้ง id มาเอง ให้สร้างให้อัตโนมัติ (กันพลาดเวลาคนเขียนเนื้อหาเร็ว ๆ)
-    ['cards', 'quiz', 'write', 'work', 'vocab'].forEach(function (kind) {
+    ['cards', 'quiz', 'write', 'work', 'vocab', 'fill'].forEach(function (kind) {
       pack[kind].forEach(function (row, i) {
         if (!row.id) row.id = kind.slice(0, 1) + (i + 1);
       });
@@ -78,6 +80,7 @@ QL.library = (function () {
     pack.write.forEach(function (w) { ids.push('write:' + w.id); });
     pack.work.forEach(function (w) { ids.push('work:' + w.id); });
     pack.vocab.forEach(function (v) { ids.push('vocab:' + v.id); });
+    pack.fill.forEach(function (f) { ids.push('fill:' + f.id); });
     return ids;
   }
 

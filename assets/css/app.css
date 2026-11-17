@@ -816,3 +816,54 @@ pre.code .jp-line + .jp-line { margin-top: 5px; }
 .hide-romaji .v-romaji,
 .hide-romaji .vg-c-rom,
 .hide-romaji .mt-rom { display: none !important; }
+
+/* ---------- เติมคำ a–t ---------- */
+.fb-bank-wrap {
+  position: sticky; top: 58px; z-index: 5;
+  background: var(--bg);
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.fb-bank { display: flex; flex-wrap: wrap; gap: 7px; }
+.fb-word {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 11px 6px 7px;
+  border: 1px solid var(--border-strong); border-radius: 99px;
+  background: var(--surface); color: var(--text);
+  font-family: inherit; font-size: 15.5px; cursor: pointer;
+  touch-action: manipulation;
+}
+.fb-word:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
+.fb-word.used { opacity: .45; }
+.fb-letter {
+  display: inline-grid; place-items: center;
+  min-width: 21px; height: 21px; border-radius: 99px;
+  background: var(--surface-2); color: var(--text-dim);
+  font-size: 12px; font-weight: 700;
+}
+.fb-list { margin: 6px 0 0; padding-left: 28px; }
+.fb-q { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.fb-q::marker { color: var(--text-faint); font-weight: 600; }
+.fb-sentence { font-size: 19px; line-height: 2; white-space: pre-line; }
+.fb-blank {
+  display: inline-block; margin: 0 4px;
+  padding: 1px 10px;
+  border: 2px dashed var(--border-strong); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text-dim);
+  font-family: inherit; font-size: 17px; line-height: 1.6; cursor: pointer;
+  touch-action: manipulation;
+}
+.fb-blank.filled { border-style: solid; color: var(--text); font-weight: 600; }
+.fb-blank.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.fb-blank.right { border-color: var(--ok); background: var(--ok-soft); color: var(--ok); }
+.fb-blank.wrong { border-color: var(--bad); background: var(--bad-soft); color: var(--bad); text-decoration: line-through; }
+.fb-q .romaji { margin-top: 2px; }
+.fb-explain { position: relative; margin-top: 6px; padding-right: 44px; }
+.fb-explain .v-speak { top: 0; right: 0; }
+.fb-correct { font-size: 15px; color: var(--ok); }
+@media (max-width: 620px) {
+  .fb-sentence { font-size: 17px; }
+  .fb-word { font-size: 14px; }
+  .fb-bank-wrap { top: 54px; }
+}
