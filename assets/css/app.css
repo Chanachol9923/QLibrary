@@ -859,11 +859,56 @@ pre.code .jp-line + .jp-line { margin-top: 5px; }
 .fb-blank.right { border-color: var(--ok); background: var(--ok-soft); color: var(--ok); }
 .fb-blank.wrong { border-color: var(--bad); background: var(--bad-soft); color: var(--bad); text-decoration: line-through; }
 .fb-q .romaji { margin-top: 2px; }
-.fb-explain { position: relative; margin-top: 6px; padding-right: 44px; }
-.fb-explain .v-speak { top: 0; right: 0; }
-.fb-correct { font-size: 15px; color: var(--ok); }
 @media (max-width: 620px) {
   .fb-sentence { font-size: 17px; }
   .fb-word { font-size: 14px; }
   .fb-bank-wrap { top: 54px; }
 }
+
+/* เติมคำ a–t: เลือกวิธีฝึก */
+.fb-styles { margin-bottom: 4px; }
+.fb-style { font-family: inherit; color: inherit; border-width: 2px; }
+.fb-style.active { border-color: var(--accent); background: var(--accent-soft); }
+.fb-style.active h3 { color: var(--accent); }
+
+/* คำ + ความหมาย (คลังคำ / ตัวเลือก) */
+.fb-wbody { display: inline-flex; flex-direction: column; align-items: flex-start; line-height: 1.25; }
+.fb-gloss { font-size: 11.5px; color: var(--text-faint); font-weight: 400; }
+.fb-word .fb-wbody { padding: 1px 0; }
+
+/* ทีละข้อ */
+.fb-step-card .fb-sentence { font-size: 23px; line-height: 2.1; }
+.fb-blank.big { font-size: 21px; padding: 2px 16px; cursor: default; }
+.fb-choices { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 14px; }
+.fb-choice { align-items: center; }
+.fb-choice .fb-w { font-size: 19px; font-weight: 600; }
+.fb-choice .fb-gloss { font-size: 12.5px; }
+
+/* ช่วย / คำใบ้ */
+.fb-help { margin-top: 10px; }
+.fb-hint-btn {
+  margin-top: 6px; padding: 3px 11px;
+  border: 1px dashed var(--border-strong); border-radius: 99px;
+  background: transparent; color: var(--text-faint);
+  font-family: inherit; font-size: 12.5px; cursor: pointer;
+}
+.fb-hint-btn:hover { color: var(--accent); border-color: var(--accent); }
+.fb-th { margin-top: 6px; font-size: 15px; color: var(--text-dim); }
+.fb-clue { margin-top: 6px; font-size: 14.5px; line-height: 1.55; color: var(--text); }
+.fb-q.is-active { background: linear-gradient(90deg, var(--accent-soft), transparent 70%); border-radius: var(--radius-sm); }
+
+/* เฉลย */
+.fb-why {
+  position: relative;
+  margin-top: 12px; padding: 14px 54px 14px 16px;
+  border: 1px solid var(--border); border-left-width: 4px; border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.fb-why.ok { border-left-color: var(--ok); }
+.fb-why.bad { border-left-color: var(--bad); }
+.fb-why-head { font-size: 15.5px; margin-bottom: 4px; }
+.fb-why.ok .fb-why-head { color: var(--ok); }
+.fb-why.bad .fb-why-head { color: var(--bad); }
+.fb-why .fb-sentence { font-size: 18px; line-height: 1.9; }
+.fb-why .v-speak { top: 12px; right: 12px; }
+.fb-mark { background: var(--ok-soft); color: var(--ok); font-weight: 700; padding: 0 5px; border-radius: 5px; }
