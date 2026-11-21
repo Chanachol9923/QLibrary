@@ -1,13 +1,15 @@
 /* =========================================================
    QLibrary / modes / vocab-write.js
-   โหมด "เขียนด้วยปากกา" — เขียนคำศัพท์ทีละตัวด้วยนิ้วหรือ Apple Pencil (แนว Write It! Japanese)
+   โหมด "เขียนด้วยปากกา" — เขียนคำศัพท์ทั้งคำด้วยนิ้วหรือ Apple Pencil (แนว Write It! Japanese)
+
+   กระดานเป็นแถวช่องสี่เหลี่ยม (แบบกระดาษ 原稿用紙) ช่องละ 1 ตัว เขียนต่อกันได้ทั้งคำในหน้าเดียว
+   ทุกช่องตรวจพร้อมกันทีละเส้น: ลำดับเส้น · ทิศทาง · รูปร่าง (Hanzi Writer เทียบกับเส้นกลางของตัวอักษร)
 
    3 ระดับ
      🖍️ ลากตามโครง   เห็นโครงตัวอักษร พลาด 1 ครั้งมีเส้นใบ้ (เหมือนหัดเขียน)
      ✍️ เขียนเอง      ไม่มีโครง เห็นโรมาจิ พลาด 3 ครั้งค่อยใบ้
      🧪 ทดสอบ         เห็นแค่ความหมายภาษาไทย (เหมือนข้อสอบตอนที่ 1) จับเวลา ผลเข้าระบบ Leitner
 
-   ตรวจทีละเส้น: ลำดับเส้น · ทิศทาง · รูปร่าง (Hanzi Writer เทียบกับเส้นกลางของตัวอักษร)
    Apple Pencil: พอเจอปากกาครั้งแรก ระบบจะไม่รับนิ้ว/ฝ่ามือบนกระดานอีก (กันฝ่ามือ) — ปิดได้
 
    ข้อมูลภายนอก (โหลดเฉพาะตอนเข้าโหมดนี้ ต้องต่อเน็ต)
@@ -104,11 +106,13 @@
     return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
   }
 
+  function sum(a) { return a.reduce(function (x, y) { return x + y; }, 0); }
+
   QL.modes.register({
     id: 'vocabwrite',
     name: 'เขียนด้วยปากกา',
     icon: '✍️',
-    description: 'เขียนคำศัพท์ทีละตัวด้วยนิ้วหรือ Apple Pencil ตรวจลำดับเส้น ทิศทาง และรูปร่างทันที มีลากตามโครง · เขียนเอง · ทดสอบจับเวลา',
+    description: 'เขียนคำศัพท์ทั้งคำด้วยนิ้วหรือ Apple Pencil ตรวจลำดับเส้น ทิศทาง และรูปร่างทันที มีลากตามโครง · เขียนเอง · ทดสอบจับเวลา',
     available: function (pack) { return pack.vocab.some(function (v) { return !!writable(v); }); },
 
     mount: function (root, ctx) {
@@ -121,10 +125,10 @@
       var penSeen = false;                                            // เจอ Apple Pencil แล้วหรือยัง (ในหน้านี้)
       var ch = null, group = '';
       var queue = [], idx = 0;
-      var word = null;      // { e, chars, ci, miss: [], hint: [], given: [], done }
-      var writer = null, strokeAt = 0;
+      var word = null;
       var results = [];     // { e, miss, hint }
       var startedAt = 0, timer = null;
+      var ui = {};          // ชิ้นส่วนของหน้าคำปัจจุบัน: ask, board, cells[], status, actions
 
       var head = u.el('div', { class: 'study-head' });
       var bar = u.el('div');
@@ -208,71 +212,95 @@
 
         var e = queue[idx];
         var chars = Array.from(writable(e));
-        word = { e: e, chars: chars, ci: 0, miss: chars.map(function () { return 0; }), hint: chars.map(function () { return 0; }), given: [], done: false, peek: false };
+        var zero = function () { return chars.map(function () { return 0; }); };
+        word = {
+          e: e, chars: chars,
+          miss: zero(), hint: zero(), strokeAt: zero(),
+          fin: chars.map(function () { return false; }),
+          given: [], writers: [], active: 0, done: false, peek: false
+        };
         renderWord();
       }
 
-      function renderWord() {
+      function renderAsk() {
         var e = word.e;
-        stage.innerHTML = '';
-
-        // โจทย์
         var ask = u.el('div', { class: 'prompt-card kw-ask' });
         ask.appendChild(u.el('div', { class: 'prompt-topic', text: 'บทที่ ' + (e.ch || 1) + (e.group ? ' · ' + e.group : '') }));
         ask.appendChild(V.pic(e, 'kw-pic'));
         ask.appendChild(u.el('div', { class: 'v-ask', text: e.th }));
-        var showRomaji = level !== 'test' || word.peek || word.done;
-        if (showRomaji) ask.appendChild(u.el('div', { class: 'v-romaji kw-rom', text: V.romaji(word.chars.join('')) }));
+        if (level !== 'test' || word.peek || word.done) ask.appendChild(u.el('div', { class: 'v-romaji kw-rom', text: V.romaji(word.chars.join('')) }));
         if (level === 'trace' || word.done) ask.appendChild(u.el('div', { class: 'kw-kana', text: word.chars.join('') }));
         if (word.done) {
           if (e.kanji) ask.appendChild(u.el('div', { class: 'v-kanji', text: e.kanji }));
           ask.appendChild(V.speakBtn(e));
         }
-        stage.appendChild(ask);
+        if (ui.ask) ui.ask.replaceWith(ask);
+        ui.ask = ask;
+        return ask;
+      }
 
-        // ช่องตัวอักษรของคำ
-        var slots = u.el('div', { class: 'kw-slots', 'aria-label': 'ตัวอักษรในคำ' });
-        word.chars.forEach(function (c, i) {
-          var cls = 'kw-slot';
-          var txt = '';
-          if (i < word.ci || word.done) {
-            txt = c;
-            cls += word.given.indexOf(i) >= 0 ? ' given' : (word.miss[i] + word.hint[i] === 0 ? ' ok' : ' warn');
-          } else if (i === word.ci) cls += ' now';
-          slots.appendChild(u.el('div', { class: cls, text: txt }));
+      /** ขนาดช่อง: ทั้งคำอยู่แถวเดียวถ้าทำได้ ช่องไม่เล็กกว่า ~104px (เขียนด้วยปากกาได้สบาย) ยาวเกินก็ขึ้นแถวใหม่ */
+      function layout(n) {
+        var gap = 8;
+        var avail = Math.min((root.clientWidth || 360) - 4, 1100);
+        var perRow = Math.max(1, Math.min(n, Math.floor((avail + gap) / (104 + gap))));
+        var cell = Math.floor(Math.min(240, (avail - gap * (perRow - 1)) / perRow, window.innerHeight * 0.42));
+        return { gap: gap, perRow: perRow, cell: Math.max(84, cell) };
+      }
+
+      function renderWord() {
+        stage.innerHTML = '';
+        ui = {};
+        stage.appendChild(renderAsk());
+
+        var L = layout(word.chars.length);
+        var board = u.el('div', {
+          class: 'kw-board', 'aria-label': 'กระดานเขียนคำ',
+          style: 'grid-template-columns:repeat(' + L.perRow + ',' + L.cell + 'px);gap:' + L.gap + 'px'
         });
-        stage.appendChild(slots);
+        ui.cells = word.chars.map(function (c, i) {
+          var cell = u.el('div', { class: 'kw-pad' + (i === 0 ? ' now' : ''), style: 'width:' + L.cell + 'px;height:' + L.cell + 'px' });
+          cell.appendChild(u.el('div', { class: 'kw-grid' }));
+          var target = u.el('div', { class: 'kw-target' });
+          cell.appendChild(target);
+          // แตะช่องไหน = ช่องนั้นคือช่องที่ปุ่ม ดูลำดับเส้น / ใบ้ จะใช้
+          ['touchstart', 'mousedown'].forEach(function (t) {
+            cell.addEventListener(t, function () { setActive(i); }, { capture: true, passive: true });
+          });
+          board.appendChild(cell);
+          return { el: cell, target: target };
+        });
+        guardPalm(board);
+        ui.board = board;
+        stage.appendChild(u.el('div', { class: 'kw-board-wrap' }, [board]));
 
+        ui.status = u.el('div', { class: 'kw-status', text: 'กำลังโหลดตัวอักษร…' });
+        stage.appendChild(ui.status);
+
+        ui.actions = u.el('div');
+        stage.appendChild(ui.actions);
+        renderActions();
+
+        loadCells(L.cell);
+      }
+
+      function renderActions() {
+        ui.actions.innerHTML = '';
         if (word.done) return renderWordResult();
-
-        // กระดาน
-        // iPad: กระดานใหญ่พอให้เขียนด้วยปากกาสบาย แต่ยังเห็นปุ่มใต้กระดานในจอเดียว
-        var size = Math.round(Math.max(240, Math.min(520, (root.clientWidth || 360) - 8, window.innerHeight * 0.55)));
-        var pad = u.el('div', { class: 'kw-pad', style: 'width:' + size + 'px;height:' + size + 'px' });
-        pad.appendChild(u.el('div', { class: 'kw-grid' }));
-        var target = u.el('div', { class: 'kw-target' });
-        pad.appendChild(target);
-        guardPalm(pad);
-        var status = u.el('div', { class: 'kw-status', text: 'กำลังโหลดตัวอักษร…' });
-        stage.appendChild(u.el('div', { class: 'kw-board' }, [pad]));
-        stage.appendChild(status);
-
-        stage.appendChild(u.el('div', { class: 'btn-row kw-actions' }, [
+        ui.actions.appendChild(u.el('div', { class: 'btn-row kw-actions' }, [
           u.el('button', { class: 'btn', html: '▶ ดูลำดับเส้น <span class="kbd">A</span>', onclick: animate }),
           u.el('button', { class: 'btn', html: '💡 ใบ้เส้นถัดไป <span class="kbd">H</span>', onclick: hint }),
           level === 'test' && !word.peek ? u.el('button', { class: 'btn', text: '👀 ดูโรมาจิ', onclick: peek }) : null,
-          u.el('button', { class: 'btn ghost', text: '↺ เขียนตัวนี้ใหม่', onclick: function () { startChar(target, status, size); } }),
+          u.el('button', { class: 'btn ghost', text: '↺ เขียนใหม่ทั้งคำ', onclick: startWord }),
           u.el('button', { class: 'btn ghost', text: 'ข้ามคำ', onclick: skipWord })
         ]));
-        stage.appendChild(u.el('div', { class: 'kw-credit', html: 'ตรวจเส้นด้วย <a href="https://github.com/chanind/hanzi-writer" target="_blank" rel="noopener">Hanzi Writer</a> · ข้อมูลลำดับเส้นจาก AnimCJK' }));
-
-        startChar(target, status, size);
+        ui.actions.appendChild(u.el('div', { class: 'kw-credit', html: 'ตรวจเส้นด้วย <a href="https://github.com/chanind/hanzi-writer" target="_blank" rel="noopener">Hanzi Writer</a> · ข้อมูลลำดับเส้นจาก AnimCJK' }));
       }
 
       /* ---------- Apple Pencil: กันฝ่ามือ ----------
          Hanzi Writer ฟัง touch/mouse ที่ตัว svg — เราดักที่กรอบนอกในช่วง capture
          ถ้าเคยเจอปากกาแล้ว ทัชที่ไม่ใช่ stylus จะไม่ถึงกระดานเลย */
-      function guardPalm(pad) {
+      function guardPalm(el) {
         function onTouch(ev) {
           var t = ev.changedTouches && ev.changedTouches[0];
           if (!t) return;
@@ -283,22 +311,23 @@
           if (palmGuard && penSeen) { ev.stopPropagation(); ev.preventDefault(); }
         }
         ['touchstart', 'touchmove', 'touchend'].forEach(function (type) {
-          pad.addEventListener(type, onTouch, { capture: true, passive: false });
+          el.addEventListener(type, onTouch, { capture: true, passive: false });
         });
       }
 
-      /* ---------- เขียนทีละตัว ---------- */
-      function startChar(target, status, size) {
-        var c = word.chars[word.ci];
-        target.innerHTML = '';
-        writer = null; strokeAt = 0;
-        status.textContent = 'กำลังโหลดตัวอักษร…';
-        status.className = 'kw-status';
-        var myWord = word, myCi = word.ci;
-
-        loadWriter().then(function () { return charData(c); }).then(function () {
-          if (word !== myWord || word.ci !== myCi) return;     // เปลี่ยนคำไปแล้ว
-          writer = HanziWriter.create(target, c, {
+      /* ---------- โหลดทุกช่องของคำพร้อมกัน ---------- */
+      function loadCells(size) {
+        var myWord = word;
+        setStatus('', 'กำลังโหลดตัวอักษร…');
+        loadWriter().then(function () {
+          return Promise.all(word.chars.map(function (c) {
+            return charData(c).then(function () { return null; }, function (err) { return err; });
+          }));
+        }).then(function (errs) {
+          if (word !== myWord) return;
+          var netErr = errs.filter(function (e) { return e && !e.missing; })[0];
+          if (netErr) throw netErr;
+          var opts = {
             width: size, height: size, padding: Math.round(size * 0.07),
             showCharacter: false,
             showOutline: level === 'trace',
@@ -306,112 +335,164 @@
             outlineColor: cssVar('--border', '#dfe3ea'),
             highlightColor: cssVar('--accent', '#3b5bdb'),
             drawingColor: cssVar('--accent', '#3b5bdb'),
-            drawingWidth: Math.max(12, Math.round(size / 26)),
+            drawingWidth: Math.max(8, Math.round(size / 24)),
             strokeAnimationSpeed: 1.4, delayBetweenStrokes: 180,
-            charDataLoader: function (ch2, onLoad, onError) { charData(ch2).then(onLoad, onError); }
+            charDataLoader: function (c2, onLoad, onError) { charData(c2).then(onLoad, onError); }
+          };
+          word.chars.forEach(function (c, i) {
+            if (errs[i]) {
+              // ตัวที่ไม่มีข้อมูลเส้น (สัญลักษณ์พิเศษ) — เติมให้เลย ไม่ต้องเขียน
+              word.given.push(i); word.fin[i] = true;
+              ui.cells[i].target.appendChild(u.el('div', { class: 'kw-given-char', style: 'font-size:' + Math.round(size * 0.6) + 'px', text: c }));
+              ui.cells[i].el.classList.add('given');
+              return;
+            }
+            word.writers[i] = HanziWriter.create(ui.cells[i].target, c, opts);
+            quiz(i);
           });
-          runQuiz(status);
-        }).catch(function (err) {
+          setActive(firstOpen());
+          promptStatus();
+          if (word.fin.every(Boolean)) finishWord();
+        }).catch(function () {
           if (word !== myWord) return;
-          if (err && /ข้อมูลเส้น/.test(err.message)) {
-            // ตัวที่ไม่มีข้อมูลเส้น (เช่นสัญลักษณ์พิเศษ) — เติมให้แล้วข้ามไป
-            word.given.push(word.ci);
-            status.textContent = 'ตัว ' + c + ' ไม่มีข้อมูลเส้น ข้ามให้แล้ว';
-            setTimeout(nextChar, 700);
-          } else {
-            status.className = 'kw-status bad';
-            status.textContent = '⚠️ โหลดไม่สำเร็จ — โหมดนี้ต้องต่ออินเทอร์เน็ต ลองกด "↺ เขียนตัวนี้ใหม่"';
-          }
+          setStatus('bad', '⚠️ โหลดไม่สำเร็จ — โหมดนี้ต้องต่ออินเทอร์เน็ต ลองกด "↺ เขียนใหม่ทั้งคำ"');
         });
       }
 
-      function runQuiz(status) {
-        if (!writer) return;
-        var c = word.chars[word.ci];
-        status.className = 'kw-status';
-        status.textContent = 'เขียนตัว ' + (level === 'test' && !word.peek ? 'ที่ ' + (word.ci + 1) : '「' + c + '」') + ' — เส้นที่ 1';
-        writer.quiz({
+      function quiz(i) {
+        var w = word.writers[i];
+        if (!w) return;
+        var myWord = word;
+        w.quiz({
           leniency: level === 'test' ? 1.15 : 1.35,
           showHintAfterMisses: lv().hintAfter,
           highlightOnComplete: true,
           onCorrectStroke: function (d) {
-            strokeAt = d.strokeNum + 1;
-            if (d.strokesRemaining > 0) status.textContent = '✓ ถูก — เส้นที่ ' + (strokeAt + 1) + ' จาก ' + (strokeAt + d.strokesRemaining);
+            if (word !== myWord) return;
+            word.strokeAt[i] = d.strokeNum + 1;
+            setActive(i);
+            if (d.strokesRemaining > 0) setStatus('', '✓ ' + label(i) + ' เส้นที่ ' + (d.strokeNum + 1) + ' ถูก — ต่อเส้นที่ ' + (d.strokeNum + 2) + ' จาก ' + (d.strokeNum + 1 + d.strokesRemaining));
           },
           onMistake: function (d) {
-            word.miss[word.ci]++;
-            status.className = 'kw-status bad';
-            status.textContent = '✗ เส้นที่ ' + (d.strokeNum + 1) + ' ยังไม่ใช่ — ดูลำดับ ทิศทาง หรือรูปร่าง' +
-              (d.mistakesOnStroke >= lv().hintAfter ? ' (มีเส้นใบ้ให้แล้ว)' : '');
+            if (word !== myWord) return;
+            word.miss[i]++;
+            setActive(i);
+            setStatus('bad', '✗ ' + label(i) + ' เส้นที่ ' + (d.strokeNum + 1) + ' ยังไม่ใช่ — ดูลำดับ ทิศทาง หรือรูปร่าง' +
+              (d.mistakesOnStroke >= lv().hintAfter ? ' (มีเส้นใบ้ให้แล้ว)' : ''));
           },
           onComplete: function () {
-            status.className = 'kw-status ok';
-            var m = word.miss[word.ci] + word.hint[word.ci];
-            status.textContent = m === 0 ? '🎉 เป๊ะ!' : '✓ เสร็จ (พลาด/ใบ้ ' + m + ')';
-            setTimeout(nextChar, 450);
+            if (word !== myWord) return;
+            word.fin[i] = true;
+            var m = word.miss[i] + word.hint[i];
+            ui.cells[i].el.classList.add(m === 0 ? 'ok' : 'warn');
+            if (word.fin.every(Boolean)) return setTimeout(function () { if (word === myWord) finishWord(); }, 350);
+            setActive(firstOpen());
+            setStatus('ok', (m === 0 ? '🎉 ' : '✓ ') + label(i) + ' เสร็จ — ต่อ' + label(word.active));
           }
         });
       }
 
-      function nextChar() {
+      function label(i) {
+        return level === 'test' && !word.peek ? 'ตัวที่ ' + (i + 1) : 'ตัว「' + word.chars[i] + '」';
+      }
+
+      function firstOpen() {
+        for (var i = 0; i < word.fin.length; i++) if (!word.fin[i]) return i;
+        return word.fin.length - 1;
+      }
+
+      /** ช่องที่จะใช้กับปุ่มดูลำดับเส้น / ใบ้ — ถ้าช่องนั้นเขียนเสร็จแล้ว ใช้ช่องแรกที่ยังไม่เสร็จแทน */
+      function openActive() {
+        return word.fin[word.active] ? firstOpen() : word.active;
+      }
+
+      function setActive(i) {
         if (!word || word.done) return;
-        word.ci++;
-        if (word.ci >= word.chars.length) return finishWord();
-        renderWord();
+        word.active = i;
+        ui.cells.forEach(function (c, k) { c.el.classList.toggle('now', k === i && !word.fin[k]); });
+      }
+
+      function setStatus(kind, text) {
+        if (!ui.status) return;
+        ui.status.className = 'kw-status' + (kind ? ' ' + kind : '');
+        ui.status.textContent = text;
+      }
+
+      function promptStatus() {
+        var n = word.chars.length - word.given.length;
+        setStatus('', n > 1 ? 'เขียนทั้งคำ ' + n + ' ตัว เรียงจากซ้ายไปขวา — ตรวจทีละเส้นทุกช่อง' : 'เขียน' + label(0));
       }
 
       function animate() {
-        if (!writer) return;
-        if (level === 'test') word.hint[word.ci]++;
-        var status = stage.querySelector('.kw-status');
-        writer.cancelQuiz();
-        status.className = 'kw-status';
-        status.textContent = 'ดูลำดับเส้น…';
-        writer.animateCharacter({
+        if (word.done) return;
+        var i = openActive(), w = word.writers[i];
+        if (!w) return;
+        if (level === 'test') word.hint[i]++;
+        setActive(i);
+        w.cancelQuiz();
+        setStatus('', 'ดูลำดับเส้น' + label(i) + '…');
+        var myWord = word;
+        w.animateCharacter({
           onComplete: function () {
-            setTimeout(function () { if (!writer) return; writer.hideCharacter(); runQuiz(status); }, 500);
+            setTimeout(function () {
+              if (word !== myWord || word.done) return;
+              w.hideCharacter(); quiz(i); promptStatus();
+            }, 500);
           }
         });
       }
 
       function hint() {
-        if (!writer) return;
-        word.hint[word.ci]++;
-        writer.highlightStroke(strokeAt);
+        if (word.done) return;
+        var i = openActive(), w = word.writers[i];
+        if (!w) return;
+        word.hint[i]++;
+        setActive(i);
+        w.highlightStroke(word.strokeAt[i]);
       }
 
-      function peek() { word.peek = true; word.hint[word.ci]++; renderWord(); }
+      function peek() { word.peek = true; word.hint[openActive()]++; renderAsk(); renderActions(); }
 
       function skipWord() {
-        word.miss = word.miss.map(function (m) { return m + 3; });   // ข้าม = ยังเขียนไม่ได้
+        word.fin.forEach(function (f, i) { if (!f) word.miss[i] += 3; });   // ข้าม = ตัวที่ยังไม่เสร็จนับว่ายังเขียนไม่ได้
         finishWord();
       }
 
       /* ---------- จบคำ ---------- */
       function finishWord() {
-        word.done = true; writer = null;
-        var miss = word.miss.reduce(function (a, b) { return a + b; }, 0);
-        var hints = word.hint.reduce(function (a, b) { return a + b; }, 0);
+        if (word.done) return;
+        word.done = true;
+        // ช่องที่ยังไม่เสร็จ (กดข้าม) — โชว์ตัวที่ถูกให้ดูในช่องเลย
+        word.writers.forEach(function (w, i) {
+          if (!w || word.fin[i]) return;
+          w.cancelQuiz(); w.showCharacter();
+          ui.cells[i].el.classList.add('bad');
+        });
+        ui.cells.forEach(function (c) { c.el.classList.remove('now'); });
+
+        var miss = sum(word.miss), hints = sum(word.hint);
         results.push({ e: word.e, miss: miss, hint: hints });
         if (level === 'test') {
           var total = miss + hints;
           QL.store.grade(deckId, itemId(word.e), total <= 2, total > 0 && total <= 2);
         }
         if (V.canSpeak) V.speak(word.e.kana);
-        renderWord();
+        setStatus('', '');
+        renderAsk();
+        renderActions();
       }
 
       function renderWordResult() {
         var r = results[results.length - 1];
         var total = r.miss + r.hint;
         var verdict = total === 0 ? ['ok', '🎉 เขียนได้เป๊ะทั้งคำ'] : total <= 2 ? ['warn', '👍 เกือบเป๊ะ — พลาด ' + r.miss + ' · ใบ้ ' + r.hint] : ['bad', '📝 ต้องฝึกเพิ่ม — พลาด ' + r.miss + ' · ใบ้ ' + r.hint];
-        stage.appendChild(u.el('div', { class: 'kw-verdict ' + verdict[0], text: verdict[1] }));
-        if (word.e.note) stage.appendChild(u.el('div', { class: 'v-note', text: word.e.note }));
-        stage.appendChild(u.el('div', { class: 'btn-row', style: 'margin-top:14px' }, [
+        ui.actions.appendChild(u.el('div', { class: 'kw-verdict ' + verdict[0], text: verdict[1] }));
+        if (word.e.note) ui.actions.appendChild(u.el('div', { class: 'v-note', text: word.e.note }));
+        ui.actions.appendChild(u.el('div', { class: 'btn-row', style: 'margin-top:14px' }, [
           u.el('button', { class: 'btn primary', html: (idx + 1 < queue.length ? 'คำถัดไป →' : 'ดูสรุป') + ' <span class="kbd">Enter</span>', onclick: nextWord }),
           u.el('button', { class: 'btn ghost', text: '↺ เขียนคำนี้อีกรอบ', onclick: function () { results.pop(); startWord(); } })
         ]));
-        stage.appendChild(u.el('div', { style: 'margin-top:18px' }, [u.bar(idx + 1, queue.length, { label: 'ความคืบหน้า', text: (idx + 1) + '/' + queue.length })]));
+        ui.actions.appendChild(u.el('div', { style: 'margin-top:18px' }, [u.bar(idx + 1, queue.length, { label: 'ความคืบหน้า', text: (idx + 1) + '/' + queue.length })]));
       }
 
       function nextWord() { idx++; startWord(); }

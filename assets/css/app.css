@@ -934,23 +934,20 @@ pre.code .jp-line + .jp-line { margin-top: 5px; }
 .kw-rom { font-size: 17px; margin-top: 2px; }
 .kw-kana { font-size: 30px; font-weight: 600; letter-spacing: .06em; margin-top: 4px; }
 
-.kw-slots { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 16px 0 12px; }
-.kw-slot {
-  width: 46px; height: 46px; display: grid; place-items: center;
-  border: 1.5px solid var(--border); border-radius: 10px; background: var(--surface);
-  font-size: 26px; font-weight: 600; color: var(--text);
-}
-.kw-slot.now { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-.kw-slot.ok { border-color: var(--ok); background: var(--ok-soft); color: var(--ok); }
-.kw-slot.warn { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); }
-.kw-slot.given { border-style: dashed; color: var(--text-faint); }
-
-.kw-board { display: flex; justify-content: center; }
+.kw-board-wrap { display: flex; justify-content: center; margin-top: 16px; }
+.kw-board { display: grid; justify-content: center; }
 .kw-pad {
-  position: relative; border: 1.5px solid var(--border-strong); border-radius: 16px;
+  position: relative; border: 1.5px solid var(--border-strong); border-radius: 14px;
   background: var(--surface); box-shadow: var(--shadow); overflow: hidden;
   touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  transition: border-color .15s, box-shadow .15s;
 }
+.kw-pad.now { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.kw-pad.ok { border-color: var(--ok); background: var(--ok-soft); }
+.kw-pad.warn { border-color: var(--warn); background: var(--warn-soft); }
+.kw-pad.bad { border-color: var(--bad); background: var(--bad-soft); }
+.kw-pad.given { border-style: dashed; }
+.kw-given-char { position: absolute; inset: 0; display: grid; place-items: center; color: var(--text-faint); }
 .kw-grid {
   position: absolute; inset: 0; pointer-events: none;
   background:
