@@ -912,3 +912,67 @@ pre.code .jp-line + .jp-line { margin-top: 5px; }
 .fb-why .fb-sentence { font-size: 18px; line-height: 1.9; }
 .fb-why .v-speak { top: 12px; right: 12px; }
 .fb-mark { background: var(--ok-soft); color: var(--ok); font-weight: 700; padding: 0 5px; border-radius: 5px; }
+
+/* =========================================================
+   โหมด "เขียนด้วยปากกา" (vocab-write.js)
+   ========================================================= */
+.kw-opts { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.kw-select {
+  padding: 7px 12px; border: 1px solid var(--border-strong); border-radius: 99px;
+  background: var(--surface); color: var(--text); font-family: inherit; font-size: 14px; max-width: 100%;
+}
+.kw-toggle {
+  padding: 7px 13px; border: 1px dashed var(--border-strong); border-radius: 99px;
+  background: transparent; color: var(--text-dim); font-family: inherit; font-size: 13.5px; cursor: pointer;
+}
+.kw-toggle.on { border-style: solid; border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+.kw-ask { text-align: center; padding-top: 30px; }
+.kw-pic { width: 76px; height: 76px; font-size: 46px; margin: 2px auto 8px; display: flex; border-radius: 14px; }
+.kw-pic.is-multi { font-size: 30px; }
+.kw-pic.is-text { font-size: 22px; }
+.kw-rom { font-size: 17px; margin-top: 2px; }
+.kw-kana { font-size: 30px; font-weight: 600; letter-spacing: .06em; margin-top: 4px; }
+
+.kw-slots { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 16px 0 12px; }
+.kw-slot {
+  width: 46px; height: 46px; display: grid; place-items: center;
+  border: 1.5px solid var(--border); border-radius: 10px; background: var(--surface);
+  font-size: 26px; font-weight: 600; color: var(--text);
+}
+.kw-slot.now { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.kw-slot.ok { border-color: var(--ok); background: var(--ok-soft); color: var(--ok); }
+.kw-slot.warn { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); }
+.kw-slot.given { border-style: dashed; color: var(--text-faint); }
+
+.kw-board { display: flex; justify-content: center; }
+.kw-pad {
+  position: relative; border: 1.5px solid var(--border-strong); border-radius: 16px;
+  background: var(--surface); box-shadow: var(--shadow); overflow: hidden;
+  touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+.kw-grid {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(to right, transparent calc(50% - 1px), var(--border) calc(50% - 1px), var(--border) calc(50% + 1px), transparent calc(50% + 1px)),
+    linear-gradient(to bottom, transparent calc(50% - 1px), var(--border) calc(50% - 1px), var(--border) calc(50% + 1px), transparent calc(50% + 1px));
+}
+.kw-target { position: absolute; inset: 0; }
+.kw-target svg { display: block; }
+
+.kw-status { text-align: center; margin: 12px 0 4px; font-size: 15.5px; color: var(--text-dim); min-height: 24px; }
+.kw-status.ok { color: var(--ok); font-weight: 600; }
+.kw-status.bad { color: var(--bad); }
+.kw-actions { justify-content: center; margin-top: 10px; }
+.kw-credit { text-align: center; margin-top: 14px; font-size: 12px; color: var(--text-faint); }
+.kw-credit a { color: inherit; }
+
+.kw-verdict { text-align: center; margin-top: 6px; padding: 12px; border-radius: var(--radius-sm); font-size: 17px; font-weight: 600; }
+.kw-verdict.ok { background: var(--ok-soft); color: var(--ok); }
+.kw-verdict.warn { background: var(--warn-soft); color: var(--warn); }
+.kw-verdict.bad { background: var(--bad-soft); color: var(--bad); }
+
+.kw-review { margin-top: 14px; }
+.kw-review-row { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; padding: 8px 0; border-top: 1px solid var(--border); }
+.kw-review-kana { font-size: 20px; font-weight: 600; }
+.kw-review-th { color: var(--text-dim); flex: 1 1 140px; }
