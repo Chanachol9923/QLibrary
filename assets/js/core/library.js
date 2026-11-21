@@ -23,6 +23,7 @@
      work:   [ { id, prompt, given, hint, steps: [], answer, topic } ]   // โจทย์แสดงวิธีทำ (เขียนด้วยปากกา)
      vocab:  [ { id, ch, page, group, pic | flag, kana, kanji, th, alt, note, exam } ]
      fill:   [ { id, ch, page, text: 'ประโยคมี （　） 1 ช่อง', answer, alt: [], th, note } ]   // เติมคำ a–t   // ศัพท์สำหรับท่อง (ดู content/_template.js)
+     anim:   [ { id, ch, title, src, frames: [ { s: 'คำ|คำ', cap, th, pic, stage } ] } ]   // แอนิเมชันไวยากรณ์ (ดู content/jpn5-final-anim.js)
    }
    ทุก section เป็น optional — pack ที่มีแค่ cards ก็ใช้ได้ โหมดที่ไม่มีข้อมูลจะถูกซ่อน
    ========================================================= */
@@ -49,6 +50,7 @@ QL.library = (function () {
     pack.work = pack.work || [];
     pack.vocab = pack.vocab || [];
     pack.fill = pack.fill || [];     // โจทย์เติมคำจากคลังคำ a–t (โหมด "เติมคำ a–t")
+    pack.anim = pack.anim || [];     // ฉากแอนิเมชันไวยากรณ์ (โหมด "ดูแอนิเมชัน")
     pack.icon = pack.icon || '📘';
     pack.subject = pack.subject || 'อื่น ๆ';
     pack.category = pack.category || 'อื่น ๆ';
