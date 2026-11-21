@@ -146,6 +146,7 @@
       }
 
       function restart(list) {
+        stage.style.minHeight = '';
         var p = list || pool();
         queue = level === 'test' && !list ? QL.store.orderByPriority(deckId, p, itemId) : p.slice();
         idx = 0; results = []; startedAt = Date.now();
@@ -203,6 +204,9 @@
 
       /* ---------- เริ่มคำใหม่ ---------- */
       function startWord() {
+        // กันหน้าเด้ง: จองความสูงเดิมไว้ระหว่างสลับคำ แล้วคืนตำแหน่งเลื่อนจอเดิม
+        var y = window.scrollY;
+        stage.style.minHeight = Math.max(parseFloat(stage.style.minHeight) || 0, stage.offsetHeight) + 'px';
         renderHead(); renderBar();
         stage.innerHTML = '';
         if (!queue.length) return stage.appendChild(u.el('div', { class: 'empty' }, [
@@ -217,35 +221,47 @@
           e: e, chars: chars,
           miss: zero(), hint: zero(), strokeAt: zero(),
           fin: chars.map(function () { return false; }),
-          given: [], writers: [], active: 0, done: false, peek: false
+          given: [], writers: [], active: 0, done: false, doneAt: 0, peek: false
         };
         renderWord();
+        if (window.scrollY !== y) window.scrollTo(0, y);
       }
 
+      /** การ์ดโจทย์ — ความสูงคงที่ทุกสถานะ (บรรทัดที่ยังไม่โชว์ใช้ visibility:hidden จองที่ไว้)
+          กระดานใต้การ์ดจึงอยู่ตำแหน่งเดิมทุกคำ หน้าไม่เด้ง */
       function renderAsk() {
         var e = word.e;
-        var ask = u.el('div', { class: 'prompt-card kw-ask' });
-        ask.appendChild(u.el('div', { class: 'prompt-topic', text: 'บทที่ ' + (e.ch || 1) + (e.group ? ' · ' + e.group : '') }));
-        ask.appendChild(V.pic(e, 'kw-pic'));
-        ask.appendChild(u.el('div', { class: 'v-ask', text: e.th }));
-        if (level !== 'test' || word.peek || word.done) ask.appendChild(u.el('div', { class: 'v-romaji kw-rom', text: V.romaji(word.chars.join('')) }));
-        if (level === 'trace' || word.done) ask.appendChild(u.el('div', { class: 'kw-kana', text: word.chars.join('') }));
-        if (word.done) {
-          if (e.kanji) ask.appendChild(u.el('div', { class: 'v-kanji', text: e.kanji }));
-          ask.appendChild(V.speakBtn(e));
-        }
+        var showRom = level !== 'test' || word.peek || word.done;
+        var showKana = level === 'trace' || word.done;
+        var kana = word.chars.join('') + (word.done && e.kanji ? '　' + e.kanji : '');
+        var ask = u.el('div', { class: 'prompt-card kw-ask' }, [
+          V.pic(e, 'kw-pic'),
+          u.el('div', { class: 'kw-ask-text' }, [
+            u.el('div', { class: 'prompt-topic kw-topic', text: 'บทที่ ' + (e.ch || 1) + (e.group ? ' · ' + e.group : '') }),
+            u.el('div', { class: 'kw-th', text: e.th }),
+            u.el('div', { class: 'kw-ask-jp' }, [
+              u.el('span', { class: 'kw-kana' + (showKana ? '' : ' kw-hide'), text: kana }),
+              u.el('span', { class: 'v-romaji kw-rom' + (showRom ? '' : ' kw-hide'), text: V.romaji(word.chars.join('')) })
+            ])
+          ]),
+          level !== 'test' || word.done ? V.speakBtn(e) : null   // ทดสอบ: ห้ามฟังก่อนเขียนเสร็จ (เฉลยเสียง)
+        ]);
         if (ui.ask) ui.ask.replaceWith(ask);
         ui.ask = ask;
         return ask;
       }
 
-      /** ขนาดช่อง: ทั้งคำอยู่แถวเดียวถ้าทำได้ ช่องไม่เล็กกว่า ~104px (เขียนด้วยปากกาได้สบาย) ยาวเกินก็ขึ้นแถวใหม่ */
+      /** ขนาดช่อง: พอดีมือ ไม่ใหญ่เกิน (สูงสุด 136px) ทั้งคำอยู่แถวเดียวถ้าทำได้ ยาวเกินขึ้นแถวใหม่
+          และย่อลงอีกถ้าความสูงจอไม่พอ — ให้การ์ดโจทย์ + กระดาน + แถบปุ่มอยู่ในจอเดียว ไม่ต้องเลื่อน */
       function layout(n) {
-        var gap = 8;
+        var gap = 8, MAX = 136, MIN = 72;
         var avail = Math.min((root.clientWidth || 360) - 4, 1100);
-        var perRow = Math.max(1, Math.min(n, Math.floor((avail + gap) / (104 + gap))));
-        var cell = Math.floor(Math.min(240, (avail - gap * (perRow - 1)) / perRow, window.innerHeight * 0.42));
-        return { gap: gap, perRow: perRow, cell: Math.max(84, cell) };
+        var perRow = Math.max(1, Math.min(n, Math.floor((avail + gap) / (84 + gap))));
+        var cell = Math.min(MAX, (avail - gap * (perRow - 1)) / perRow);
+        var rows = Math.ceil(n / perRow);
+        var room = window.innerHeight - 380;                 // หัว + ตัวเลือก + การ์ดโจทย์ + แถบปุ่ม (โดยประมาณ)
+        if (rows * cell + (rows - 1) * gap > room) cell = (room - (rows - 1) * gap) / rows;
+        return { gap: gap, perRow: perRow, cell: Math.floor(Math.max(MIN, cell)) };
       }
 
       function renderWord() {
@@ -271,30 +287,37 @@
           return { el: cell, target: target };
         });
         guardPalm(board);
+        // เขียนเสร็จแล้ว แตะกระดานอีกที = ไปคำถัดไป (เว้น 0.6 วิ กันแตะเบิ้ลตอนลากเส้นสุดท้าย)
+        board.addEventListener('click', function () {
+          if (word.done && Date.now() - word.doneAt > 600) nextWord();
+        });
         ui.board = board;
         stage.appendChild(u.el('div', { class: 'kw-board-wrap' }, [board]));
 
+        // แถบล่างติดขอบจอ: สถานะ + ปุ่ม — ไม่ต้องเลื่อนลงไปกด
         ui.status = u.el('div', { class: 'kw-status', text: 'กำลังโหลดตัวอักษร…' });
-        stage.appendChild(ui.status);
-
-        ui.actions = u.el('div');
-        stage.appendChild(ui.actions);
+        ui.btns = u.el('div', { class: 'kw-dock-btns' });
+        stage.appendChild(u.el('div', { class: 'kw-dock' }, [ui.status, ui.btns]));
+        ui.after = u.el('div', { class: 'kw-after' });
+        stage.appendChild(ui.after);
         renderActions();
 
         loadCells(L.cell);
       }
 
+      /** ปุ่มในแถบล่าง — ตอนเขียน: เครื่องมือ · เขียนเสร็จ: ปุ่ม "คำถัดไป" ใหญ่ ๆ ตำแหน่งเดิม */
       function renderActions() {
-        ui.actions.innerHTML = '';
+        ui.btns.innerHTML = '';
+        ui.after.innerHTML = '';
         if (word.done) return renderWordResult();
-        ui.actions.appendChild(u.el('div', { class: 'btn-row kw-actions' }, [
-          u.el('button', { class: 'btn', html: '▶ ดูลำดับเส้น <span class="kbd">A</span>', onclick: animate }),
-          u.el('button', { class: 'btn', html: '💡 ใบ้เส้นถัดไป <span class="kbd">H</span>', onclick: hint }),
-          level === 'test' && !word.peek ? u.el('button', { class: 'btn', text: '👀 ดูโรมาจิ', onclick: peek }) : null,
-          u.el('button', { class: 'btn ghost', text: '↺ เขียนใหม่ทั้งคำ', onclick: startWord }),
-          u.el('button', { class: 'btn ghost', text: 'ข้ามคำ', onclick: skipWord })
-        ]));
-        ui.actions.appendChild(u.el('div', { class: 'kw-credit', html: 'ตรวจเส้นด้วย <a href="https://github.com/chanind/hanzi-writer" target="_blank" rel="noopener">Hanzi Writer</a> · ข้อมูลลำดับเส้นจาก AnimCJK' }));
+        [
+          u.el('button', { class: 'btn', html: '▶ ลำดับเส้น <span class="kbd">A</span>', onclick: animate }),
+          u.el('button', { class: 'btn', html: '💡 ใบ้ <span class="kbd">H</span>', onclick: hint }),
+          level === 'test' && !word.peek ? u.el('button', { class: 'btn', text: '👀 โรมาจิ', onclick: peek }) : null,
+          u.el('button', { class: 'btn ghost', text: '↺ เขียนใหม่', onclick: startWord }),
+          u.el('button', { class: 'btn ghost', text: 'ข้าม →', onclick: skipWord })
+        ].forEach(function (b) { if (b) ui.btns.appendChild(b); });
+        ui.after.appendChild(u.el('div', { class: 'kw-credit', html: 'ตรวจเส้นด้วย <a href="https://github.com/chanind/hanzi-writer" target="_blank" rel="noopener">Hanzi Writer</a> · ข้อมูลลำดับเส้นจาก AnimCJK' }));
       }
 
       /* ---------- Apple Pencil: กันฝ่ามือ ----------
@@ -461,7 +484,7 @@
       /* ---------- จบคำ ---------- */
       function finishWord() {
         if (word.done) return;
-        word.done = true;
+        word.done = true; word.doneAt = Date.now();
         // ช่องที่ยังไม่เสร็จ (กดข้าม) — โชว์ตัวที่ถูกให้ดูในช่องเลย
         word.writers.forEach(function (w, i) {
           if (!w || word.fin[i]) return;
@@ -477,7 +500,6 @@
           QL.store.grade(deckId, itemId(word.e), total <= 2, total > 0 && total <= 2);
         }
         if (V.canSpeak) V.speak(word.e.kana);
-        setStatus('', '');
         renderAsk();
         renderActions();
       }
@@ -486,13 +508,12 @@
         var r = results[results.length - 1];
         var total = r.miss + r.hint;
         var verdict = total === 0 ? ['ok', '🎉 เขียนได้เป๊ะทั้งคำ'] : total <= 2 ? ['warn', '👍 เกือบเป๊ะ — พลาด ' + r.miss + ' · ใบ้ ' + r.hint] : ['bad', '📝 ต้องฝึกเพิ่ม — พลาด ' + r.miss + ' · ใบ้ ' + r.hint];
-        ui.actions.appendChild(u.el('div', { class: 'kw-verdict ' + verdict[0], text: verdict[1] }));
-        if (word.e.note) ui.actions.appendChild(u.el('div', { class: 'v-note', text: word.e.note }));
-        ui.actions.appendChild(u.el('div', { class: 'btn-row', style: 'margin-top:14px' }, [
-          u.el('button', { class: 'btn primary', html: (idx + 1 < queue.length ? 'คำถัดไป →' : 'ดูสรุป') + ' <span class="kbd">Enter</span>', onclick: nextWord }),
-          u.el('button', { class: 'btn ghost', text: '↺ เขียนคำนี้อีกรอบ', onclick: function () { results.pop(); startWord(); } })
-        ]));
-        ui.actions.appendChild(u.el('div', { style: 'margin-top:18px' }, [u.bar(idx + 1, queue.length, { label: 'ความคืบหน้า', text: (idx + 1) + '/' + queue.length })]));
+        setStatus(verdict[0], verdict[1] + ' · แตะกระดานเพื่อไปต่อ');
+        var next = u.el('button', { class: 'btn primary kw-next', html: (idx + 1 < queue.length ? 'คำถัดไป →' : 'ดูสรุป') + ' <span class="kbd">Enter</span>', onclick: nextWord });
+        ui.btns.appendChild(next);
+        ui.btns.appendChild(u.el('button', { class: 'btn ghost', text: '↺ เขียนคำนี้อีกรอบ', onclick: function () { results.pop(); startWord(); } }));
+        if (word.e.note) ui.after.appendChild(u.el('div', { class: 'v-note', text: word.e.note }));
+        try { next.focus({ preventScroll: true }); } catch (err) { /* เบราว์เซอร์เก่า */ }
       }
 
       function nextWord() { idx++; startWord(); }
